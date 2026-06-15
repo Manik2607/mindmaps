@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Handle, Position, NodeProps } from '@xyflow/react';
 import { useStore } from '@/store/useStore';
-import { NodeData } from '@/types';
+import { AppNode } from '@/types';
 import { Palette, Pencil } from 'lucide-react';
 
 const COLORS = [
@@ -14,7 +14,7 @@ const COLORS = [
   '#4A2B3A', // Rose
 ];
 
-export function MindNode({ id, data, selected }: NodeProps<NodeData>) {
+export function MindNode({ id, data, selected }: NodeProps<AppNode>) {
   const updateNodeData = useStore((state) => state.updateNodeData);
   const [isEditing, setIsEditing] = useState(data.label === '');
   const [isEditingDetails, setIsEditingDetails] = useState(false);

@@ -1,12 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { useStore, useTemporalStore } from '@/store/useStore';
-import { Search, Map as MapIcon, Maximize, ZoomIn, ZoomOut, Download, Upload } from 'lucide-react';
+import { Search, Map as MapIcon, Maximize, ZoomIn, ZoomOut, Download, Upload, Pencil } from 'lucide-react';
 import { MindMapCanvas } from '@/components/canvas/MindMapCanvas';
 import { Sidebar } from './Sidebar';
 import { SearchModal } from './SearchModal';
-import { useReactFlow, getNodesBounds, getViewportForBounds } from '@xyflow/react';
+import { useReactFlow } from '@xyflow/react';
 import { toPng } from 'html-to-image';
-import { v4 as uuidv4 } from 'uuid';
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,6 +16,20 @@ export function Layout() {
   const edges = useStore((state) => state.edges);
   const loadMap = useStore((state) => state.loadMap);
   const createMap = useStore((state) => state.createMap);
+  const renameMap = useStore((state) => state.renameMap);
+  const mapsList = useStore((state) => state.mapsList);
+
+  const activeMapName = mapsList.find(m => m.id === activeMapId)?.name || 'Home';
+  
+  const [isRenamingMap, setIsRenamingMap] = useState(false);
+  const [mapNameInput, setMapNameInput] = useState('');
+
+  const handleRenameSubmit = () => {
+    if (mapNameInput.trim() && mapNameInput.trim() !== activeMapName) {
+      renameMap(activeMapId, mapNameInput.trim());
+    }
+    setIsRenamingMap(false);
+  };
 
   const { undo, redo } = useTemporalStore((state) => state);
   const { zoomIn, zoomOut, fitView, setNodes, getNodes } = useReactFlow();
@@ -67,7 +80,7 @@ export function Layout() {
         const parsed = JSON.parse(content);
         if (parsed.nodes && parsed.edges) {
           const newId = createMap(file.name.replace('.json', ''));
-          loadMap(newId, file.name.replace('.json', ''), false);
+          loadMap(newId, file.name.replace('.json', ''));
           // Small delay to let Zustand update active map, then overwrite nodes/edges
           setTimeout(() => {
             useStore.setState({ nodes: parsed.nodes, edges: parsed.edges });
@@ -75,7 +88,7 @@ export function Layout() {
         } else {
           alert('Invalid map format.');
         }
-      } catch (err) {
+      } catch {
         alert('Failed to parse JSON.');
       }
     };
@@ -139,8 +152,41 @@ export function Layout() {
       </main>
 
       {/* Top Left Chrome */}
-      <div className="absolute top-4 left-4 z-10 pointer-events-none select-none">
-        <h1 className="text-sm font-semibold text-text-muted mb-1">MindMaps</h1>
+      <div className="absolute top-4 left-4 z-10 flex flex-col pointer-events-auto">
+        <h1 className="text-xs font-semibold text-text-muted mb-1 select-none pointer-events-none">MindMaps</h1>
+        {isRenamingMap ? (
+          <input
+            autoFocus
+            className="bg-node-fill border border-accent text-text-main text-sm rounded px-2 py-1 outline-none min-w-[150px] shadow-lg"
+            value={mapNameInput}
+            onChange={(e) => setMapNameInput(e.target.value)}
+            onBlur={handleRenameSubmit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleRenameSubmit();
+              if (e.key === 'Escape') setIsRenamingMap(false);
+            }}
+          />
+        ) : (
+          <div 
+            className="text-lg font-serif text-text-main cursor-text hover:text-accent transition-colors flex items-center space-x-2 group"
+            onDoubleClick={() => {
+              setMapNameInput(activeMapName);
+              setIsRenamingMap(true);
+            }}
+            title="Double-click to rename"
+          >
+            <span>{activeMapName}</span>
+            <span 
+              className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer p-1"
+              onClick={() => {
+                setMapNameInput(activeMapName);
+                setIsRenamingMap(true);
+              }}
+            >
+              <Pencil size={12} className="text-text-muted hover:text-accent" />
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Top Right Controls */}

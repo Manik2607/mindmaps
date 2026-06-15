@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { EdgeProps, getBezierPath, BaseEdge, EdgeLabelRenderer } from '@xyflow/react';
-import { EdgeData } from '@/types';
+import { AppEdge } from '@/types';
 import { useStore } from '@/store/useStore';
 
 export function ConnectionEdge({
@@ -14,7 +14,7 @@ export function ConnectionEdge({
   data,
   style,
   markerEnd,
-}: EdgeProps<EdgeData>) {
+}: EdgeProps<AppEdge>) {
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,

@@ -28,11 +28,11 @@ export default function Home() {
       // Find the most recently updated map
       const mostRecent = useStore.getState().mapsList[0];
       if (mostRecent) {
-        loadMap(mostRecent.id, mostRecent.name, false);
+        loadMap(mostRecent.id, mostRecent.name);
       } else {
         // No maps at all, create 'Home'
         const id = createMap('Home');
-        loadMap(id, 'Home', false);
+        loadMap(id, 'Home');
       }
     }
   }, [initialized, activeMapId, loadMap, createMap]);

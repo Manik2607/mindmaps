@@ -64,3 +64,15 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to start map
 - **Canvas Rendering**: `@xyflow/react` (React Flow)
 - **State Management**: `zustand` (with `zundo` for temporal history)
 - **Icons**: `lucide-react`
+
+## Deployment
+
+MindMaps is built as a standard Next.js application and can be easily deployed to [Vercel](https://vercel.com) (the creators of Next.js), which provides the most seamless experience.
+
+1. Push your code to a GitHub repository.
+2. Log in to Vercel and click **Add New Project**.
+3. Import your GitHub repository.
+4. Leave all build settings as default (`npm run build`).
+5. Click **Deploy**.
+
+Because MindMaps relies entirely on `localStorage` for its database, there are absolutely no backend databases, environment variables, or authentication providers to configure! It will work out-of-the-box on any static or serverless hosting provider.

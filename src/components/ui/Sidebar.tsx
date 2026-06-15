@@ -31,7 +31,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         <button
           onClick={() => {
             const id = createMap('New Map');
-            loadMap(id, 'New Map', false);
+            loadMap(id, 'New Map');
           }}
           className="w-full flex items-center justify-center space-x-2 py-2 bg-node-fill hover:bg-[#2A2A2A] text-text-main rounded-md border border-[#333] transition-colors text-sm"
         >
@@ -47,7 +47,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             className={`group flex items-center justify-between p-2 rounded-md cursor-pointer transition-colors ${
               activeMapId === map.id ? 'bg-[#2A2A2A] text-text-main' : 'hover:bg-[#1E1E1E] text-text-muted'
             }`}
-            onClick={() => loadMap(map.id, map.name, false)}
+            onClick={() => loadMap(map.id, map.name)}
           >
             <div className="flex flex-col overflow-hidden">
               <span className="truncate text-sm">{map.name}</span>

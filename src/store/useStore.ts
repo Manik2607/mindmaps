@@ -243,7 +243,7 @@ export const useStore = create<MindMapState>()(temporal((set, get) => ({
 }));
 
 // Export the temporal store to access undo/redo
-export const useTemporalStore = <T,>(selector: (state: TemporalState<MindMapState>) => T) => useZustandStore(useStore.temporal, selector);
+export const useTemporalStore = <T>(selector: (state: TemporalState<{ nodes: AppNode[]; edges: AppEdge[]; }>) => T) => useZustandStore(useStore.temporal, selector);
 
 // Helper
 function getMapFromStorage(id: string): MindMap | null {

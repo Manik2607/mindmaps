@@ -3,9 +3,7 @@ import {
   ReactFlow,
   Background,
   MiniMap,
-  Controls,
   useReactFlow,
-  Panel,
   ConnectionMode
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -29,8 +27,7 @@ export function MindMapCanvas() {
     onNodesChange,
     onEdgesChange,
     onConnect,
-    addNode,
-    activeMapId
+    addNode
   } = useStore();
 
   const { screenToFlowPosition, fitView, setNodes, getNodes } = useReactFlow();
@@ -45,7 +42,7 @@ export function MindMapCanvas() {
   }, []);
 
   const onPaneContextMenu = useCallback(
-    (event: React.MouseEvent) => {
+    (event: React.MouseEvent | MouseEvent) => {
       event.preventDefault();
       setMenu({
         top: event.clientY,
@@ -55,7 +52,7 @@ export function MindMapCanvas() {
     [setMenu],
   );
 
-  const onDoubleClick = useCallback((event: React.MouseEvent) => {
+  const onDoubleClick = useCallback((event: React.MouseEvent | MouseEvent) => {
     // Only trigger if we double clicked the background, not a node
     if ((event.target as HTMLElement).closest('.react-flow__node')) return;
 
@@ -71,7 +68,6 @@ export function MindMapCanvas() {
       data: {
         label: '',
         color: '#1E1E1E', // default
-        isContainer: false,
       },
     });
   }, [screenToFlowPosition, addNode]);
@@ -100,7 +96,7 @@ export function MindMapCanvas() {
       >
         <Background color="#333" gap={20} size={1} />
         <MiniMap 
-          nodeColor={(n) => '#1E1E1E'} 
+          nodeColor={() => '#1E1E1E'} 
           maskColor="rgba(0, 0, 0, 0.6)"
           className="border border-node-border rounded-lg bg-[#121212]"
         />
