@@ -1,26 +1,39 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-canvas: #0D0D0D;
+  --color-node-fill: #1E1E1E;
+  --color-node-border: #333333;
+  --color-node-border-selected: #6C63FF;
+  --color-node-border-hover: #555555;
+  --color-text-main: #F0EBE0;
+  --color-accent: #6C63FF;
+  --color-text-muted: #666666;
+  
+  --font-sans: var(--font-inter), sans-serif;
+  --font-serif: var(--font-dm-serif), serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: var(--color-canvas);
+  --foreground: var(--color-text-main);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* React Flow custom variable overrides to fit dark theme */
+.react-flow {
+  --xy-edge-stroke-default: var(--color-node-border);
+  --xy-edge-stroke-selected: var(--color-accent);
+  --xy-connectionline-stroke-default: var(--color-accent);
+  --xy-node-boxshadow-default: none;
+  --xy-node-boxshadow-hover: none;
+  --xy-node-boxshadow-selected: none;
+  --xy-minimap-background-color: #121212;
+  --xy-minimap-mask-bg-color: rgba(0, 0, 0, 0.6);
+  --xy-minimap-node-color: var(--color-node-fill);
 }

@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MindMaps
+
+MindMaps is a spatial thought-mapping canvas web app built with Next.js (App Router), TypeScript, Tailwind CSS, and React Flow. It is designed to be a fast, quiet, and frictionless tool for mapping out thoughts, similar to Excalidraw but optimized for text nodes and connections.
+
+## Features
+
+- **Infinite Canvas**: Fully zoomable and pannable canvas with no boundaries.
+- **Premium Dark Aesthetic**: Carefully crafted dark mode utilizing `#0D0D0D` canvas, `#1E1E1E` nodes, and `DM Serif Display` typography.
+- **Offline & Private**: Everything is saved automatically to your browser's `localStorage`. No accounts, no cloud sync, no tracking.
+- **Inline Node Details**: Need to write more than a label? Press `Tab` when a node is selected (or while editing its label) to open a multi-line details text area right inside the node.
+- **Export & Import**: Export your maps as pristine PNGs or raw JSON data. Import JSON files to resume your work later.
+- **Global Search**: Instantly search across the current map and fly the camera directly to the matching node.
+- **Undo / Redo History**: Powered by `zundo`, keep track of your last 50 actions effortlessly.
+
+## Controls & Keyboard Shortcuts
+
+MindMaps is heavily optimized for a frictionless workflow. Use the following controls to navigate and build:
+
+### Mouse Controls
+| Action | Mouse |
+| :--- | :--- |
+| **Create Node** | Double-click anywhere on the empty canvas. |
+| **Edit Node Label** | Double-click an existing node to edit its text. |
+| **Edit Node Details** | Double-click the details text below the label, or press `Tab` on the node. |
+| **Connect Nodes** | Hover over a node, click and drag from the appearance of the N/S/E/W dots, and drop onto another node. |
+| **Edit Connection Label** | Double-click an existing connection line. |
+| **Pan Canvas** | Click and drag on empty canvas space (or hold `Space` and drag). |
+| **Zoom Canvas** | Scroll wheel up/down. |
+| **Group Selection** | Click and drag on empty canvas space while holding `Shift` to draw a selection rectangle. |
+
+### Keyboard Shortcuts
+| Action | Shortcut |
+| :--- | :--- |
+| **Undo** | `Cmd/Ctrl + Z` |
+| **Redo** | `Cmd/Ctrl + Shift + Z` |
+| **Select All** | `Cmd/Ctrl + A` |
+| **Export PNG** | `Cmd/Ctrl + E` |
+| **Search Nodes** | `/` (Forward Slash) |
+| **Edit Node Details** | Press `Tab` while a node is selected or while editing its label. |
+| **Delete Node/Edge** | `Backspace` or `Delete` (when selected) |
+| **Deselect All** | `Escape` |
 
 ## Getting Started
 
-First, run the development server:
+First, install the dependencies if you haven't already:
+
+```bash
+npm install
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser to start mapping your thoughts.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework**: Next.js 14+ (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Canvas Rendering**: `@xyflow/react` (React Flow)
+- **State Management**: `zustand` (with `zundo` for temporal history)
+- **Icons**: `lucide-react`
