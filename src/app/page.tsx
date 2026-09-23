@@ -6,38 +6,24 @@ import { useStore } from '@/store/useStore';
 import { ReactFlowProvider } from '@xyflow/react';
 
 export default function Home() {
-  const loadMapsList = useStore((state) => state.loadMapsList);
-  const loadMap = useStore((state) => state.loadMap);
-  const createMap = useStore((state) => state.createMap);
-  const activeMapId = useStore((state) => state.activeMapId);
-
+  const loadWorkspace = useStore((s) => s.loadWorkspace);
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    // Bootstrap from localStorage
-    loadMapsList();
-    // eslint-disable-next-line
-    setInitialized(true);
-  }, [loadMapsList]);
+    // Bootstrap from IndexedDB
+    loadWorkspace().finally(() => setInitialized(true));
+  }, [loadWorkspace]);
 
-  useEffect(() => {
-    if (!initialized) return;
-    
-    // If we just initialized and have no active map
-    if (!activeMapId) {
-      // Find the most recently updated map
-      const mostRecent = useStore.getState().mapsList[0];
-      if (mostRecent) {
-        loadMap(mostRecent.id, mostRecent.name);
-      } else {
-        // No maps at all, create 'Home'
-        const id = createMap('Home');
-        loadMap(id, 'Home');
-      }
-    }
-  }, [initialized, activeMapId, loadMap, createMap]);
-
-  if (!initialized) return null; // Avoid hydration mismatch for localStorage data
+  if (!initialized) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-canvas">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="w-8 h-8 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+          <span className="text-sm text-text-muted">Loading workspace…</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ReactFlowProvider>

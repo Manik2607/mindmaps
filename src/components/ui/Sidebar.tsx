@@ -1,79 +1,177 @@
-import React from 'react';
-import { useStore } from '@/store/useStore';
-import { Plus, Trash2, X } from 'lucide-react';
+'use client';
 
-type SidebarProps = {
-  isOpen: boolean;
-  onClose: () => void;
+import React, { useState } from 'react';
+import { useStore } from '@/store/useStore';
+import {
+  FileText, Columns3, PenLine, Image as ImageIcon,
+  StickyNote, Network, ChevronLeft, ChevronRight, Search,
+} from 'lucide-react';
+import { useReactFlow } from '@xyflow/react';
+import { AppNode } from '@/types';
+
+const KIND_ICONS: Record<string, React.ReactNode> = {
+  mindmap:    <Network size={13} />,
+  doc:        <FileText size={13} />,
+  kanban:     <Columns3 size={13} />,
+  excalidraw: <PenLine size={13} />,
+  image:      <ImageIcon size={13} />,
+  sticky:     <StickyNote size={13} />,
 };
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const mapsList = useStore((state) => state.mapsList);
-  const activeMapId = useStore((state) => state.activeMapId);
-  const createMap = useStore((state) => state.createMap);
-  const loadMap = useStore((state) => state.loadMap);
-  const deleteMap = useStore((state) => state.deleteMap);
+const KIND_COLORS: Record<string, string> = {
+  mindmap:    'text-text-muted',
+  doc:        'text-blue-400',
+  kanban:     'text-emerald-400',
+  excalidraw: 'text-purple-400',
+  image:      'text-amber-400',
+  sticky:     'text-yellow-400',
+};
+
+function getNodeLabel(node: AppNode): string {
+  const d = node.data;
+  if (d.kind === 'mindmap') return d.label || 'Mind Map Node';
+  if (d.kind === 'doc') return d.title || 'Untitled Doc';
+  if (d.kind === 'kanban') return d.title || 'Untitled Board';
+  if (d.kind === 'excalidraw') return d.title || 'Drawing';
+  if (d.kind === 'image') return d.alt || 'Image';
+  if (d.kind === 'sticky') return d.content?.slice(0, 32) || 'Sticky Note';
+  return 'Node';
+}
+
+interface SidebarProps {
+  isOpen: boolean;
+  onToggle: () => void;
+  onSearchOpen: () => void;
+}
+
+export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
+  const nodes = useStore((s) => s.nodes);
+  const workspaceName = useStore((s) => s.workspaceName);
+  const { setCenter, getZoom } = useReactFlow();
+  const [filter, setFilter] = useState('');
+
+  const groupedNodes = nodes.reduce<Record<string, AppNode[]>>((acc, n) => {
+    const k = n.data.kind;
+    if (!acc[k]) acc[k] = [];
+    acc[k].push(n);
+    return acc;
+  }, {});
+
+  const filteredNodes = filter
+    ? nodes.filter((n) => getNodeLabel(n).toLowerCase().includes(filter.toLowerCase()))
+    : null;
+
+  const flyTo = (node: AppNode) => {
+    setCenter(node.position.x + 120, node.position.y + 80, {
+      zoom: Math.max(1, getZoom()),
+      duration: 500,
+    });
+  };
 
   return (
-    <div
-      className={`fixed top-0 left-0 h-full w-64 bg-[#151515] border-r border-[#222] transform transition-transform duration-300 z-50 flex flex-col ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}
-    >
-      <div className="flex items-center justify-between p-4 border-b border-[#222]">
-        <h2 className="text-sm font-semibold text-text-main">Your Maps</h2>
-        <button onClick={onClose} className="text-text-muted hover:text-text-main">
-          <X size={16} />
-        </button>
-      </div>
+    <>
+      {/* Sidebar panel */}
+      <div
+        className={`fixed top-0 left-0 h-full flex flex-col bg-[#0d0d0d] border-r border-[#1e1e1e] transition-all duration-300 z-30 ${
+          isOpen ? 'w-64' : 'w-0'
+        } overflow-hidden`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-4 border-b border-[#1e1e1e] shrink-0">
+          <div>
+            <p className="text-[10px] text-text-muted/50 uppercase tracking-widest font-medium">Workspace</p>
+            <h2 className="text-sm font-semibold text-text-main truncate">{workspaceName}</h2>
+          </div>
+        </div>
 
-      <div className="p-4">
-        <button
-          onClick={() => {
-            const id = createMap('New Map');
-            loadMap(id, 'New Map');
-          }}
-          className="w-full flex items-center justify-center space-x-2 py-2 bg-node-fill hover:bg-[#2A2A2A] text-text-main rounded-md border border-[#333] transition-colors text-sm"
-        >
-          <Plus size={16} />
-          <span>New Map</span>
-        </button>
-      </div>
+        {/* Search bar */}
+        <div className="px-3 py-3 border-b border-[#1e1e1e] shrink-0">
+          <div className="flex items-center space-x-2 bg-[#111] border border-[#222] rounded-lg px-3 py-1.5">
+            <Search size={13} className="text-text-muted/50 shrink-0" />
+            <input
+              className="flex-1 bg-transparent border-none outline-none text-xs text-text-main placeholder-text-muted/40"
+              placeholder="Filter nodes…"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+          </div>
+        </div>
 
-      <div className="flex-1 overflow-y-auto px-2 space-y-1">
-        {mapsList.map((map) => (
-          <div
-            key={map.id}
-            className={`group flex items-center justify-between p-2 rounded-md cursor-pointer transition-colors ${
-              activeMapId === map.id ? 'bg-[#2A2A2A] text-text-main' : 'hover:bg-[#1E1E1E] text-text-muted'
-            }`}
-            onClick={() => loadMap(map.id, map.name)}
-          >
-            <div className="flex flex-col overflow-hidden">
-              <span className="truncate text-sm">{map.name}</span>
-              <span className="text-[10px] opacity-50">
-                {new Date(map.updatedAt).toLocaleDateString()}
-              </span>
+        {/* Node list */}
+        <div className="flex-1 overflow-y-auto py-2">
+          {filteredNodes ? (
+            // Flat filtered list
+            <div className="space-y-0.5 px-2">
+              {filteredNodes.map((node) => (
+                <button
+                  key={node.id}
+                  className={`w-full flex items-center space-x-2 px-2 py-1.5 rounded-lg hover:bg-[#1a1a1a] transition-colors text-left group ${KIND_COLORS[node.data.kind] || 'text-text-muted'}`}
+                  onClick={() => flyTo(node)}
+                >
+                  <span className="shrink-0">{KIND_ICONS[node.data.kind]}</span>
+                  <span className="text-xs text-text-main truncate">{getNodeLabel(node)}</span>
+                </button>
+              ))}
+              {filteredNodes.length === 0 && (
+                <p className="text-xs text-text-muted/40 text-center mt-4">No matches</p>
+              )}
             </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                if (window.confirm(`Delete map "${map.name}"?`)) {
-                  deleteMap(map.id);
-                }
-              }}
-              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 text-red-400 rounded transition-all"
-            >
-              <Trash2 size={14} />
-            </button>
-          </div>
-        ))}
-        {mapsList.length === 0 && (
-          <div className="text-xs text-text-muted text-center mt-4">
-            No maps yet.
-          </div>
-        )}
+          ) : (
+            // Grouped view
+            Object.entries(groupedNodes).map(([kind, kindNodes]) => (
+              <div key={kind} className="mb-2">
+                <div className="flex items-center space-x-1.5 px-4 py-1">
+                  <span className={KIND_COLORS[kind] || 'text-text-muted'}>{KIND_ICONS[kind]}</span>
+                  <span className="text-[10px] text-text-muted/50 uppercase tracking-widest font-semibold">
+                    {kind === 'mindmap' ? 'Mind Map' : kind.charAt(0).toUpperCase() + kind.slice(1)}s
+                    <span className="ml-1 text-text-muted/30">({kindNodes.length})</span>
+                  </span>
+                </div>
+                <div className="space-y-0.5 px-2">
+                  {kindNodes.map((node) => (
+                    <button
+                      key={node.id}
+                      className="w-full flex items-center space-x-2 px-2 py-1.5 rounded-lg hover:bg-[#1a1a1a] transition-colors text-left"
+                      onClick={() => flyTo(node)}
+                    >
+                      <span className="text-xs text-text-main truncate">{getNodeLabel(node)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+
+          {nodes.length === 0 && !filter && (
+            <div className="px-4 mt-6 text-center">
+              <p className="text-xs text-text-muted/40">Your canvas is empty.</p>
+              <p className="text-xs text-text-muted/30 mt-1">Use the toolbar to add nodes.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom: Full search link */}
+        <div className="p-3 border-t border-[#1e1e1e] shrink-0">
+          <button
+            className="w-full flex items-center justify-center space-x-2 py-2 rounded-lg bg-[#111] hover:bg-[#1a1a1a] border border-[#222] text-xs text-text-muted hover:text-text-main transition-colors"
+            onClick={onSearchOpen}
+          >
+            <Search size={13} />
+            <span>Search all (⌘/)</span>
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* Toggle button */}
+      <button
+        className={`fixed top-1/2 -translate-y-1/2 z-40 w-5 h-12 flex items-center justify-center bg-[#1a1a1a] border border-[#2a2a2a] rounded-r-lg hover:bg-[#222] transition-all ${
+          isOpen ? 'left-64' : 'left-0'
+        } duration-300`}
+        onClick={onToggle}
+        title={isOpen ? 'Close sidebar' : 'Open sidebar'}
+      >
+        {isOpen ? <ChevronLeft size={12} className="text-text-muted" /> : <ChevronRight size={12} className="text-text-muted" />}
+      </button>
+    </>
   );
 }

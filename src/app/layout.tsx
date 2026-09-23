@@ -14,8 +14,8 @@ const dmSerif = DM_Serif_Display({
 });
 
 export const metadata: Metadata = {
-  title: "MindMaps",
-  description: "A spatial thought-mapping canvas",
+  title: "Flowy — Infinite Canvas Workspace",
+  description: "Flowy is a unified infinite canvas workspace combining Notion-style docs, Excalidraw drawings, Kanban boards, image references, and mind maps.",
 };
 
 export default function RootLayout({

@@ -1,6 +1,15 @@
 import { create, useStore as useZustandStore } from 'zustand';
 import { temporal, TemporalState } from 'zundo';
-import { AppNode, AppEdge, MindMap } from '../types';
+import {
+  AppNode,
+  AppEdge,
+  AnyNodeData,
+  DocNodeData,
+  KanbanNodeData,
+  ExcalidrawNodeData,
+  Block,
+  KanbanColumn,
+} from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Connection,
@@ -10,244 +19,216 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
 } from '@xyflow/react';
+import { loadWorkspace, saveWorkspace } from '@/lib/db';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// State shape
+// ─────────────────────────────────────────────────────────────────────────────
 
+type OverlayState =
+  | { type: null }
+  | { type: 'doc'; nodeId: string }
+  | { type: 'kanban'; nodeId: string }
+  | { type: 'excalidraw'; nodeId: string };
 
-type MindMapState = {
-  // Current active map data
-  activeMapId: string;
+type WorkspaceState = {
+  workspaceName: string;
   nodes: AppNode[];
   edges: AppEdge[];
-  
-  // Navigation & Metadata
-  mapsList: { id: string; name: string; updatedAt: number }[]; // For the sidebar
 
-  // Actions
+  // Overlay
+  overlay: OverlayState;
+  openOverlay: (type: 'doc' | 'kanban' | 'excalidraw', nodeId: string) => void;
+  closeOverlay: () => void;
+
+  // React Flow handlers
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
-  
-  // Node Operations
+
+  // Generic node ops
   addNode: (node: AppNode) => void;
-  updateNodeData: (id: string, data: Partial<AppNode['data']>) => void;
+  updateNodeData: (id: string, data: Partial<AnyNodeData>) => void;
   deleteNode: (id: string) => void;
-  
-  // Edge Operations
+
+  // Type-specific updaters
+  updateDocBlocks: (nodeId: string, blocks: Block[]) => void;
+  updateDocTitle: (nodeId: string, title: string) => void;
+  updateKanbanColumns: (nodeId: string, columns: KanbanColumn[]) => void;
+  updateKanbanTitle: (nodeId: string, title: string) => void;
+  updateExcalidrawData: (
+    nodeId: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    elements: any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    appState: any,
+    thumbnail?: string
+  ) => void;
+
+  // Edge ops
   updateEdgeData: (id: string, data: Partial<AppEdge['data']>) => void;
 
-  // Map Navigation & Operations
-  loadMap: (mapId: string, mapName: string) => void;
-  createMap: (name?: string) => string; // Returns new map ID
-  deleteMap: (mapId: string) => void;
-  renameMap: (mapId: string, newName: string) => void;
-  
   // Persistence
-  saveCurrentMap: () => void;
-  loadMapsList: () => void;
+  saveWorkspace: () => Promise<void>;
+  loadWorkspace: () => Promise<void>;
+
+  // Rename
+  renameWorkspace: (name: string) => void;
 };
 
-// Helper for local storage keys
-const getMapKey = (id: string) => `mindmaps_map_${id}`;
+// ─────────────────────────────────────────────────────────────────────────────
+// Store
+// ─────────────────────────────────────────────────────────────────────────────
 
-export const useStore = create<MindMapState>()(temporal((set, get) => ({
-  activeMapId: '',
-  nodes: [],
-  edges: [],
-  mapsList: [],
-
-  onNodesChange: (changes: NodeChange[]) => {
-    set({
-      nodes: applyNodeChanges(changes, get().nodes) as AppNode[],
-    });
-    get().saveCurrentMap();
-  },
-  onEdgesChange: (changes: EdgeChange[]) => {
-    set({
-      edges: applyEdgeChanges(changes, get().edges) as AppEdge[],
-    });
-    get().saveCurrentMap();
-  },
-  onConnect: (connection: Connection) => {
-    const newEdge: AppEdge = {
-      ...connection,
-      id: uuidv4(),
-      type: 'connection',
-    } as AppEdge;
-    set({
-      edges: addEdge(newEdge, get().edges) as AppEdge[],
-    });
-    get().saveCurrentMap();
-  },
-
-  addNode: (node: AppNode) => {
-    set({ nodes: [...get().nodes, node] });
-    get().saveCurrentMap();
-  },
-
-  updateNodeData: (id: string, data: Partial<AppNode['data']>) => {
-    set({
-      nodes: get().nodes.map((node) => {
-        if (node.id === id) {
-          return { ...node, data: { ...node.data, ...data } };
-        }
-        return node;
-      }),
-    });
-    get().saveCurrentMap();
-  },
-
-  deleteNode: (id: string) => {
-    set({
-      nodes: get().nodes.filter((n) => n.id !== id),
-      edges: get().edges.filter((e) => e.source !== id && e.target !== id),
-    });
-    get().saveCurrentMap();
-  },
-
-  updateEdgeData: (id: string, data: Partial<AppEdge['data']>) => {
-    set({
-      edges: get().edges.map((edge) => {
-        if (edge.id === id) {
-          return { ...edge, data: { ...edge.data, ...data } };
-        }
-        return edge;
-      }),
-    });
-    get().saveCurrentMap();
-  },
-
-  saveCurrentMap: () => {
-    const { activeMapId, nodes, edges } = get();
-    if (!activeMapId) return;
-
-    // We will find the name from mapsList
-    const mapInfo = get().mapsList.find(m => m.id === activeMapId);
-    const mapName = mapInfo ? mapInfo.name : 'Home';
-    
-    const mapData: MindMap = {
-      id: activeMapId,
-      name: mapName,
-      createdAt: mapInfo ? getMapFromStorage(activeMapId)?.createdAt || Date.now() : Date.now(),
-      updatedAt: Date.now(),
-      nodes,
-      edges,
-    };
-    
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(getMapKey(activeMapId), JSON.stringify(mapData));
-      get().loadMapsList(); // Refresh list to update 'updatedAt'
-    }
-  },
-
-  loadMapsList: () => {
-    if (typeof window === 'undefined') return;
-    const mapsList: { id: string; name: string; updatedAt: number }[] = [];
-    for (let i = 0; i < window.localStorage.length; i++) {
-      const key = window.localStorage.key(i);
-      if (key && key.startsWith('mindmaps_map_')) {
-        try {
-          const mapData: MindMap = JSON.parse(window.localStorage.getItem(key) || '{}');
-          if (mapData.id) {
-            mapsList.push({ id: mapData.id, name: mapData.name, updatedAt: mapData.updatedAt });
-          }
-        } catch (e) {
-          console.error('Error parsing map data', e);
-        }
-      }
-    }
-    mapsList.sort((a, b) => b.updatedAt - a.updatedAt);
-    set({ mapsList });
-  },
-
-  createMap: (name = 'New Map') => {
-    const id = uuidv4();
-    const mapData: MindMap = {
-      id,
-      name,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+export const useStore = create<WorkspaceState>()(
+  temporal(
+    (set, get) => ({
+      workspaceName: 'My Workspace',
       nodes: [],
       edges: [],
-    };
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(getMapKey(id), JSON.stringify(mapData));
+
+      overlay: { type: null },
+      openOverlay: (type, nodeId) => set({ overlay: { type, nodeId } }),
+      closeOverlay: () => set({ overlay: { type: null } }),
+
+      onNodesChange: (changes: NodeChange[]) => {
+        set({ nodes: applyNodeChanges(changes, get().nodes) as AppNode[] });
+        get().saveWorkspace();
+      },
+      onEdgesChange: (changes: EdgeChange[]) => {
+        set({ edges: applyEdgeChanges(changes, get().edges) as AppEdge[] });
+        get().saveWorkspace();
+      },
+      onConnect: (connection: Connection) => {
+        const newEdge: AppEdge = {
+          ...connection,
+          id: uuidv4(),
+          type: 'connection',
+        } as AppEdge;
+        set({ edges: addEdge(newEdge, get().edges) as AppEdge[] });
+        get().saveWorkspace();
+      },
+
+      addNode: (node: AppNode) => {
+        set({ nodes: [...get().nodes, node] });
+        get().saveWorkspace();
+      },
+
+      updateNodeData: (id: string, data: Partial<AnyNodeData>) => {
+        set({
+          nodes: get().nodes.map((n) =>
+            n.id === id ? { ...n, data: { ...n.data, ...data } as AnyNodeData } : n
+          ),
+        });
+        get().saveWorkspace();
+      },
+
+      deleteNode: (id: string) => {
+        set({
+          nodes: get().nodes.filter((n) => n.id !== id),
+          edges: get().edges.filter((e) => e.source !== id && e.target !== id),
+        });
+        get().saveWorkspace();
+      },
+
+      updateDocBlocks: (nodeId: string, blocks: Block[]) => {
+        set({
+          nodes: get().nodes.map((n) =>
+            n.id === nodeId
+              ? { ...n, data: { ...(n.data as DocNodeData), blocks } }
+              : n
+          ),
+        });
+        get().saveWorkspace();
+      },
+
+      updateDocTitle: (nodeId: string, title: string) => {
+        set({
+          nodes: get().nodes.map((n) =>
+            n.id === nodeId
+              ? { ...n, data: { ...(n.data as DocNodeData), title } }
+              : n
+          ),
+        });
+        get().saveWorkspace();
+      },
+
+      updateKanbanColumns: (nodeId: string, columns: KanbanColumn[]) => {
+        set({
+          nodes: get().nodes.map((n) =>
+            n.id === nodeId
+              ? { ...n, data: { ...(n.data as KanbanNodeData), columns } }
+              : n
+          ),
+        });
+        get().saveWorkspace();
+      },
+
+      updateKanbanTitle: (nodeId: string, title: string) => {
+        set({
+          nodes: get().nodes.map((n) =>
+            n.id === nodeId
+              ? { ...n, data: { ...(n.data as KanbanNodeData), title } }
+              : n
+          ),
+        });
+        get().saveWorkspace();
+      },
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      updateExcalidrawData: (nodeId: string, elements: any[], appState: any, thumbnail?: string) => {
+        set({
+          nodes: get().nodes.map((n) =>
+            n.id === nodeId
+              ? {
+                  ...n,
+                  data: {
+                    ...(n.data as ExcalidrawNodeData),
+                    elements,
+                    appState,
+                    ...(thumbnail !== undefined ? { thumbnail } : {}),
+                  },
+                }
+              : n
+          ),
+        });
+        get().saveWorkspace();
+      },
+
+      updateEdgeData: (id: string, data: Partial<AppEdge['data']>) => {
+        set({
+          edges: get().edges.map((e) =>
+            e.id === id ? { ...e, data: { ...e.data, ...data } } : e
+          ),
+        });
+        get().saveWorkspace();
+      },
+
+      saveWorkspace: async () => {
+        const { nodes, edges, workspaceName } = get();
+        await saveWorkspace(nodes, edges, workspaceName);
+      },
+
+      loadWorkspace: async () => {
+        const data = await loadWorkspace();
+        if (data) {
+          set({ nodes: data.nodes, edges: data.edges, workspaceName: data.name });
+        }
+      },
+
+      renameWorkspace: (name: string) => {
+        set({ workspaceName: name });
+        get().saveWorkspace();
+      },
+    }),
+    {
+      limit: 50,
+      partialize: (state) => ({ nodes: state.nodes, edges: state.edges }),
     }
-    get().loadMapsList();
-    return id;
-  },
+  )
+);
 
-  loadMap: (mapId: string, mapName: string) => {
-    if (typeof window === 'undefined') return;
-    
-    // Save current map before leaving
-    if (get().activeMapId) {
-      get().saveCurrentMap();
-    }
-
-    const dataRaw = window.localStorage.getItem(getMapKey(mapId));
-    let mapData: MindMap;
-    
-    if (dataRaw) {
-      mapData = JSON.parse(dataRaw);
-    } else {
-      mapData = {
-        id: mapId,
-        name: mapName,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        nodes: [],
-        edges: [],
-      };
-      window.localStorage.setItem(getMapKey(mapId), JSON.stringify(mapData));
-      get().loadMapsList();
-    }
-
-    set({
-      activeMapId: mapId,
-      nodes: mapData.nodes,
-      edges: mapData.edges,
-    });
-  },
-
-  deleteMap: (mapId: string) => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.removeItem(getMapKey(mapId));
-    get().loadMapsList();
-    
-    // If we deleted the active map, load the first available or create a new one
-    if (get().activeMapId === mapId) {
-      const remainingMaps = get().mapsList;
-      if (remainingMaps.length > 0) {
-        get().loadMap(remainingMaps[0].id, remainingMaps[0].name);
-      } else {
-        const newId = get().createMap('Home');
-        get().loadMap(newId, 'Home');
-      }
-    }
-  },
-
-  renameMap: (mapId: string, newName: string) => {
-    if (typeof window === 'undefined') return;
-    const mapRaw = window.localStorage.getItem(getMapKey(mapId));
-    if (mapRaw) {
-      const mapData = JSON.parse(mapRaw);
-      mapData.name = newName;
-      mapData.updatedAt = Date.now();
-      window.localStorage.setItem(getMapKey(mapId), JSON.stringify(mapData));
-      get().loadMapsList();
-    }
-  }
-}), { 
-  limit: 50,
-  partialize: (state) => ({ nodes: state.nodes, edges: state.edges }),
-}));
-
-// Export the temporal store to access undo/redo
-export const useTemporalStore = <T>(selector: (state: TemporalState<{ nodes: AppNode[]; edges: AppEdge[]; }>) => T) => useZustandStore(useStore.temporal, selector);
-
-// Helper
-function getMapFromStorage(id: string): MindMap | null {
-  if (typeof window === 'undefined') return null;
-  const data = window.localStorage.getItem(getMapKey(id));
-  return data ? JSON.parse(data) : null;
-}
+// Temporal (undo/redo) hook
+export const useTemporalStore = <T>(
+  selector: (state: TemporalState<{ nodes: AppNode[]; edges: AppEdge[] }>) => T
+) => useZustandStore(useStore.temporal, selector);
