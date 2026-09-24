@@ -37,10 +37,17 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const { setCenter, getZoom } = useReactFlow();
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+    if (isOpen) {
+      setQuery('');
+    }
+  }
+
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
-      setQuery('');
     }
   }, [isOpen]);
 

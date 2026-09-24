@@ -27,8 +27,12 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${dmSerif.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="h-full overflow-hidden flex flex-col bg-canvas text-text-main">
+      <body
+        className="h-full overflow-hidden flex flex-col bg-canvas text-text-main"
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>

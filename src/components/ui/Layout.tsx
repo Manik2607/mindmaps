@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useStore, useTemporalStore } from '@/store/useStore';
 import { MindMapCanvas } from '@/components/canvas/MindMapCanvas';
 import { Sidebar } from './Sidebar';
@@ -18,7 +18,6 @@ export function Layout() {
   const [searchOpen, setSearchOpen] = useState(false);
 
   const overlay = useStore((s) => s.overlay);
-  const closeOverlay = useStore((s) => s.closeOverlay);
 
   const { undo, redo } = useTemporalStore((s) => s);
   const { setNodes, getNodes } = useReactFlow();

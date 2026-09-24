@@ -259,11 +259,32 @@ export function KanbanBoardOverlay({ nodeId }: { nodeId: string }) {
 
   const dragSrc = useRef<{ colId: string; cardId: string } | null>(null);
 
+  // Capture phase Escape listener: guarantees Esc closes immediately without manual save button
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') closeOverlay(); };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        closeOverlay();
+      }
+    };
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
   }, [closeOverlay]);
+
+  // Initialize with default columns if empty
+  useEffect(() => {
+    if (node && node.data.kind === 'kanban') {
+      const d = node.data as KanbanNodeData;
+      if (!d.columns || d.columns.length === 0) {
+        updateKanbanColumns(nodeId, [
+          { id: uuidv4(), title: 'To Do', cards: [] },
+          { id: uuidv4(), title: 'In Progress', cards: [] },
+          { id: uuidv4(), title: 'Done', cards: [] },
+        ]);
+      }
+    }
+  }, [nodeId, node, updateKanbanColumns]);
 
   if (!node || node.data.kind !== 'kanban') return null;
   const d = node.data as KanbanNodeData;
@@ -318,7 +339,7 @@ export function KanbanBoardOverlay({ nodeId }: { nodeId: string }) {
     dragSrc.current = { colId, cardId };
   };
 
-  const handleDragOver = (e: React.DragEvent, _colId: string, _cardId?: string) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
 
@@ -352,20 +373,7 @@ export function KanbanBoardOverlay({ nodeId }: { nodeId: string }) {
     );
   };
 
-  // Initialize with default columns if empty — must be in useEffect, not in render
-  useEffect(() => {
-    if (!d.columns.length) {
-      setColumns([
-        { id: uuidv4(), title: 'To Do', cards: [] },
-        { id: uuidv4(), title: 'In Progress', cards: [] },
-        { id: uuidv4(), title: 'Done', cards: [] },
-      ]);
-    }
-    // Only run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodeId]);
-
-  const columns = d.columns;
+  const columns = d.columns || [];
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-[#0d0d0d] text-text-main">
@@ -380,13 +388,20 @@ export function KanbanBoardOverlay({ nodeId }: { nodeId: string }) {
             placeholder="Board title"
           />
         </div>
-        <button
-          onClick={closeOverlay}
-          className="flex items-center space-x-2 px-4 py-1.5 rounded-lg bg-node-fill hover:bg-[#2a2a2a] border border-node-border text-sm text-text-muted hover:text-text-main transition-colors"
-        >
-          <X size={14} />
-          <span>Done</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1.5 text-xs text-text-muted/70 bg-[#161616] px-2.5 py-1 rounded-full border border-[#252525]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>Auto-saved</span>
+          </div>
+          <button
+            onClick={closeOverlay}
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-[#1a1a1a] hover:bg-[#252525] border border-[#2e2e2e] text-xs text-text-muted hover:text-text-main transition-colors"
+            title="Press Esc to close (auto-saved)"
+          >
+            <X size={14} />
+            <kbd className="text-[10px] bg-[#2a2a2a] text-text-muted/80 px-1 py-0.5 rounded font-mono">Esc</kbd>
+          </button>
+        </div>
       </div>
 
       {/* Board */}

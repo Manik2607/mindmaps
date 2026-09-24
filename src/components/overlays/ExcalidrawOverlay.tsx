@@ -5,7 +5,6 @@ import { useStore } from '@/store/useStore';
 import { ExcalidrawNodeData } from '@/types';
 import { X } from 'lucide-react';
 import dynamic from 'next/dynamic';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 import '@excalidraw/excalidraw/index.css';
 
 // Lazy-load Excalidraw — ssr:false is critical (it uses browser APIs)
@@ -29,8 +28,12 @@ export function ExcalidrawOverlay({ nodeId }: { nodeId: string }) {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const excalidrawAPIRef = useRef<any>(null);
+  const isClosingRef = useRef(false);
 
   const handleClose = useCallback(async () => {
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+
     if (excalidrawAPIRef.current) {
       try {
         const api = excalidrawAPIRef.current;
@@ -74,19 +77,17 @@ export function ExcalidrawOverlay({ nodeId }: { nodeId: string }) {
     closeOverlay();
   }, [nodeId, updateExcalidrawData, closeOverlay]);
 
-  // Escape key to close (only when Excalidraw itself doesn't have focus on a text field)
+  // Capture phase Escape listener: guarantees Esc closes and saves even when Excalidraw canvas is active
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        const active = document.activeElement;
-        const inExcalidrawInput =
-          active instanceof HTMLInputElement ||
-          active instanceof HTMLTextAreaElement;
-        if (!inExcalidrawInput) handleClose();
+        e.preventDefault();
+        e.stopPropagation();
+        handleClose();
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
   }, [handleClose]);
 
   if (!node || node.data.kind !== 'excalidraw') return null;
@@ -100,31 +101,28 @@ export function ExcalidrawOverlay({ nodeId }: { nodeId: string }) {
           <div className="w-2 h-2 rounded-full bg-purple-400" />
           <span className="text-sm font-semibold text-text-main">{d.title || 'Drawing'}</span>
         </div>
-        <button
-          onClick={handleClose}
-          className="flex items-center space-x-2 px-4 py-1.5 rounded-lg bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-[#333] text-sm text-text-muted hover:text-text-main transition-colors"
-        >
-          <X size={14} />
-          <span>Done</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1.5 text-xs text-text-muted/70 bg-[#161616] px-2.5 py-1 rounded-full border border-[#252525]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>Auto-saved</span>
+          </div>
+          <button
+            onClick={handleClose}
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-[#1a1a1a] hover:bg-[#252525] border border-[#2e2e2e] text-xs text-text-muted hover:text-text-main transition-colors"
+            title="Press Esc to close (auto-saved)"
+          >
+            <X size={14} />
+            <kbd className="text-[10px] bg-[#2a2a2a] text-text-muted/80 px-1 py-0.5 rounded font-mono">Esc</kbd>
+          </button>
+        </div>
       </div>
 
-      {/* Excalidraw canvas — must have explicit height for the canvas to measure its viewport */}
+      {/* Excalidraw canvas */}
       <div style={{ position: 'relative', flex: 1, minHeight: 0, height: '100%' }}>
         <Excalidraw
           theme="dark"
           excalidrawAPI={(api) => {
             excalidrawAPIRef.current = api;
-            try {
-              api.updateScene({
-                appState: {
-                  theme: 'dark',
-                  viewBackgroundColor: '#ffffff',
-                },
-              });
-            } catch {
-              // ignore
-            }
           }}
           initialData={{
             elements: d.elements ?? [],

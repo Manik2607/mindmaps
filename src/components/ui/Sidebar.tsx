@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
 import { AppNode } from '@/types';
+import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 
 const KIND_ICONS: Record<string, React.ReactNode> = {
   mindmap:    <Network size={13} />,
@@ -46,7 +47,6 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
   const nodes = useStore((s) => s.nodes);
-  const workspaceName = useStore((s) => s.workspaceName);
   const { setCenter, getZoom } = useReactFlow();
   const [filter, setFilter] = useState('');
 
@@ -76,12 +76,10 @@ export function Sidebar({ isOpen, onToggle, onSearchOpen }: SidebarProps) {
           isOpen ? 'w-64' : 'w-0'
         } overflow-hidden`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-[#1e1e1e] shrink-0">
-          <div>
-            <p className="text-[10px] text-text-muted/50 uppercase tracking-widest font-medium">Workspace</p>
-            <h2 className="text-sm font-semibold text-text-main truncate">{workspaceName}</h2>
-          </div>
+        {/* Header with WorkspaceSwitcher */}
+        <div className="p-3 border-b border-[#1e1e1e] shrink-0 space-y-1">
+          <p className="text-[10px] text-text-muted/50 uppercase tracking-widest font-medium px-1">Workspace</p>
+          <WorkspaceSwitcher variant="sidebar" />
         </div>
 
         {/* Search bar */}

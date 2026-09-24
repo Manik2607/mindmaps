@@ -49,7 +49,6 @@ function BlockEditor({ block, index, onChange, onAddAfter, onDelete, onMoveUp, o
   const [showMenu, setShowMenu] = useState(false);
   const [menuFilter, setMenuFilter] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const imageRef = useRef<HTMLInputElement>(null);
 
   // Register in focus map
   useEffect(() => {
@@ -209,7 +208,7 @@ function BlockEditor({ block, index, onChange, onAddAfter, onDelete, onMoveUp, o
 
         {/* Slash command menu */}
         {showMenu && filteredCommands.length > 0 && (
-          <div className="absolute top-full left-0 mt-1 w-72 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-2xl z-50 overflow-hidden">
+          <div data-block-menu="true" className="absolute top-full left-0 mt-1 w-72 bg-[#1a1a1a] border border-[#333] rounded-xl shadow-2xl z-50 overflow-hidden">
             <div className="p-2 text-xs text-text-muted border-b border-[#333] px-3">Blocks</div>
             {filteredCommands.map((cmd) => (
               <button
@@ -241,11 +240,6 @@ export function DocEditorOverlay({ nodeId }: { nodeId: string }) {
   const closeOverlay = useStore((s) => s.closeOverlay);
 
   const focusMap = useRef<Map<string, HTMLElement>>(new Map());
-
-  if (!node || node.data.kind !== 'doc') return null;
-  const d = node.data as DocNodeData;
-
-  const setBlocks = (blocks: Block[]) => updateDocBlocks(nodeId, blocks);
 
   const handleBlockChange = useCallback((id: string, patch: Partial<Block>) => {
     const current = useStore.getState().nodes.find((n) => n.id === nodeId);
@@ -298,24 +292,36 @@ export function DocEditorOverlay({ nodeId }: { nodeId: string }) {
     updateDocBlocks(nodeId, blocks);
   }, [nodeId, updateDocBlocks]);
 
-  // Close on Escape
+  // Capture phase Escape listener: guarantees Esc closes immediately without manual save button
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeOverlay();
+      if (e.key === 'Escape') {
+        const slashMenu = document.querySelector('[data-block-menu="true"]');
+        if (slashMenu) return; // let block command menu close first
+
+        e.preventDefault();
+        e.stopPropagation();
+        closeOverlay();
+      }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
   }, [closeOverlay]);
 
-  // Initialize with default block if empty — must be in useEffect, not in render
+  // Initialize with default block if empty
   useEffect(() => {
-    if (d.blocks.length === 0) {
-      setBlocks([newBlock()]);
+    if (node && node.data.kind === 'doc') {
+      const d = node.data as DocNodeData;
+      if (!d.blocks || d.blocks.length === 0) {
+        updateDocBlocks(nodeId, [newBlock()]);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodeId]);
+  }, [nodeId, node, updateDocBlocks]);
 
-  const blocks = d.blocks.length ? d.blocks : [newBlock()];
+  if (!node || node.data.kind !== 'doc') return null;
+  const d = node.data as DocNodeData;
+
+  const blocks = d.blocks && d.blocks.length ? d.blocks : [newBlock()];
 
   return (
     <div
@@ -328,13 +334,20 @@ export function DocEditorOverlay({ nodeId }: { nodeId: string }) {
           <div className="w-2 h-2 rounded-full bg-blue-400" />
           <span className="text-sm text-text-muted">Document</span>
         </div>
-        <button
-          onClick={closeOverlay}
-          className="flex items-center space-x-2 px-4 py-1.5 rounded-lg bg-node-fill hover:bg-[#2a2a2a] border border-node-border text-sm text-text-muted hover:text-text-main transition-colors"
-        >
-          <X size={14} />
-          <span>Done</span>
-        </button>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1.5 text-xs text-text-muted/70 bg-[#161616] px-2.5 py-1 rounded-full border border-[#252525]">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+            <span>Auto-saved</span>
+          </div>
+          <button
+            onClick={closeOverlay}
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-[#1a1a1a] hover:bg-[#252525] border border-[#2e2e2e] text-xs text-text-muted hover:text-text-main transition-colors"
+            title="Press Esc to close (auto-saved)"
+          >
+            <X size={14} />
+            <kbd className="text-[10px] bg-[#2a2a2a] text-text-muted/80 px-1 py-0.5 rounded font-mono">Esc</kbd>
+          </button>
+        </div>
       </div>
 
       {/* Editor */}

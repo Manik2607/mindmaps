@@ -115,8 +115,15 @@ export type AppEdge = Edge<EdgeData, 'connection'>;
 // Workspace (persisted to IndexedDB)
 // ─────────────────────────────────────────────────────────────────────────────
 
+export type WorkspaceMeta = {
+  id: string;
+  name: string;
+  updatedAt: number;
+  nodeCount: number;
+};
+
 export type Workspace = {
-  id: 'main';
+  id: string;
   name: string;
   nodes: AppNode[];
   edges: AppEdge[];

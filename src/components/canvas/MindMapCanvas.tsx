@@ -4,6 +4,7 @@ import React, { useCallback, useRef, useState, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
+  BackgroundVariant,
   useReactFlow,
   ConnectionMode,
 } from '@xyflow/react';
@@ -146,7 +147,7 @@ export function MindMapCanvas() {
         zoomOnDoubleClick={false}
         onPaneContextMenu={onPaneContextMenu}
       >
-        <Background color="#1f1f1f" gap={24} size={1} />
+        <Background variant={BackgroundVariant.Dots} color="#383838" gap={24} size={1.5} />
       </ReactFlow>
 
       {/* Right-click context menu */}
