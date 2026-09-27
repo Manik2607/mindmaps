@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Handle, Position, NodeProps, NodeResizer } from '@xyflow/react';
+import { Handle, Position, NodeProps } from '@xyflow/react';
+import { NodeResizeFrame } from './NodeResizeFrame';
 import { useStore } from '@/store/useStore';
 import { AppNode, KanbanNodeData } from '@/types';
 import { Columns3 } from 'lucide-react';
@@ -13,7 +14,7 @@ export function KanbanNode({ id, data, selected }: NodeProps<AppNode>) {
 
   return (
     <div
-      className="group relative rounded-xl border-2 overflow-hidden cursor-pointer transition-all hover:shadow-lg hover:shadow-emerald-500/10"
+      className="w-full h-full flex flex-col group relative rounded-xl border-2 overflow-hidden cursor-pointer transition-all hover:shadow-lg hover:shadow-emerald-500/10"
       style={{
         backgroundColor: '#0d1f17',
         borderColor: selected ? 'var(--color-node-border-selected)' : '#1a3d2b',
@@ -22,7 +23,7 @@ export function KanbanNode({ id, data, selected }: NodeProps<AppNode>) {
       }}
       onDoubleClick={(e) => { e.stopPropagation(); openOverlay('kanban', id); }}
     >
-      <NodeResizer minWidth={240} minHeight={140} isVisible={selected} color="var(--color-accent)" />
+      <NodeResizeFrame minWidth={240} minHeight={140} isVisible={selected} color="var(--color-accent)" />
 
       {/* Handles */}
       {(['top', 'bottom', 'left', 'right'] as const).map((pos, i) => (
@@ -44,14 +45,14 @@ export function KanbanNode({ id, data, selected }: NodeProps<AppNode>) {
       </div>
 
       {/* Column preview */}
-      <div className="px-4 py-3 flex space-x-3 overflow-hidden">
-        {d.columns.slice(0, 4).map((col) => (
-          <div key={col.id} className="flex flex-col min-w-0 flex-1">
-            <span className="text-[10px] font-semibold text-emerald-400/80 uppercase tracking-wider truncate mb-1">
+      <div className="flex-1 min-h-0 px-4 py-3 flex space-x-3 overflow-hidden">
+        {d.columns.slice(0, 8).map((col) => (
+          <div key={col.id} className="flex flex-col min-w-0 flex-1 h-full">
+            <span className="text-[10px] font-semibold text-emerald-400/80 uppercase tracking-wider truncate mb-1 shrink-0">
               {col.title}
             </span>
-            <div className="space-y-1">
-              {col.cards.slice(0, 3).map((card) => (
+            <div className="space-y-1 overflow-y-auto flex-1 pr-0.5">
+              {col.cards.slice(0, 8).map((card) => (
                 <div
                   key={card.id}
                   className="text-[10px] text-text-muted bg-white/5 rounded px-2 py-1 truncate"
@@ -59,8 +60,8 @@ export function KanbanNode({ id, data, selected }: NodeProps<AppNode>) {
                   {card.title}
                 </div>
               ))}
-              {col.cards.length > 3 && (
-                <div className="text-[10px] text-text-muted/40">+{col.cards.length - 3} more</div>
+              {col.cards.length > 8 && (
+                <div className="text-[10px] text-text-muted/40">+{col.cards.length - 8} more</div>
               )}
             </div>
           </div>

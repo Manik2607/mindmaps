@@ -12,8 +12,11 @@ export type BlockType =
   | 'bullet'
   | 'numbered'
   | 'checklist'
+  | 'quote'
+  | 'callout'
   | 'code'
-  | 'image';
+  | 'image'
+  | 'divider';
 
 export type Block = {
   id: string;
@@ -24,6 +27,8 @@ export type Block = {
   language?: string;     // for code
   src?: string;          // for image (base64 or url)
   alt?: string;          // for image
+  icon?: string;         // for callout (e.g. '💡', '⚠️', '📌', '🚀', 'ℹ️')
+  color?: string;        // for callout/block theme
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

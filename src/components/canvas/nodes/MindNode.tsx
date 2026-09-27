@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Handle, Position, NodeProps, NodeResizer } from '@xyflow/react';
+import { Handle, Position, NodeProps } from '@xyflow/react';
+import { NodeResizeFrame } from './NodeResizeFrame';
 import { useStore } from '@/store/useStore';
 import { AppNode, MindmapNodeData } from '@/types';
 import { Palette, Pencil } from 'lucide-react';
@@ -35,7 +36,7 @@ export function MindNode({ id, data, selected }: NodeProps<AppNode>) {
 
   return (
     <div
-      className={`relative rounded-xl px-6 py-4 min-w-[120px] shadow-sm transition-shadow group border-2 outline-none`}
+      className={`w-full h-full flex flex-col justify-center relative rounded-xl px-6 py-4 min-w-[120px] min-h-[60px] shadow-sm transition-shadow group border-2 outline-none`}
       style={{
         backgroundColor: d.color || COLORS[0],
         borderColor: selected ? 'var(--color-node-border-selected)' : 'var(--color-node-border)',
@@ -50,7 +51,7 @@ export function MindNode({ id, data, selected }: NodeProps<AppNode>) {
         }
       }}
     >
-      <NodeResizer minWidth={120} minHeight={60} isVisible={selected} color="var(--color-accent)" />
+      <NodeResizeFrame minWidth={120} minHeight={60} isVisible={selected} color="var(--color-accent)" />
 
       {/* Handles */}
       {(['top', 'bottom', 'left', 'right'] as const).map((pos, i) => (

@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Handle, Position, NodeProps, NodeResizer } from '@xyflow/react';
+import { Handle, Position, NodeProps } from '@xyflow/react';
+import { NodeResizeFrame } from './NodeResizeFrame';
 import { useStore } from '@/store/useStore';
 import { AppNode, ExcalidrawNodeData } from '@/types';
 import { PenLine } from 'lucide-react';
@@ -12,7 +13,7 @@ export function ExcalidrawNode({ id, data, selected }: NodeProps<AppNode>) {
 
   return (
     <div
-      className="group relative rounded-xl border-2 overflow-hidden cursor-pointer transition-all hover:shadow-lg hover:shadow-purple-500/10"
+      className="w-full h-full flex flex-col group relative rounded-xl border-2 overflow-hidden cursor-pointer transition-all hover:shadow-lg hover:shadow-purple-500/10"
       style={{
         backgroundColor: '#15101f',
         borderColor: selected ? 'var(--color-node-border-selected)' : '#3d2d5e',
@@ -21,7 +22,7 @@ export function ExcalidrawNode({ id, data, selected }: NodeProps<AppNode>) {
       }}
       onDoubleClick={(e) => { e.stopPropagation(); openOverlay('excalidraw', id); }}
     >
-      <NodeResizer minWidth={200} minHeight={140} isVisible={selected} color="var(--color-accent)" />
+      <NodeResizeFrame minWidth={200} minHeight={140} isVisible={selected} color="var(--color-accent)" />
 
       {/* Handles */}
       {(['top', 'bottom', 'left', 'right'] as const).map((pos, i) => (
@@ -38,17 +39,18 @@ export function ExcalidrawNode({ id, data, selected }: NodeProps<AppNode>) {
       {d.thumbnail ? (
         // Thumbnail view
         <>
-          <div className="flex items-center space-x-2 px-3 pt-3 pb-2 border-b border-white/10 bg-black/20">
+          <div className="flex items-center space-x-2 px-3 pt-3 pb-2 border-b border-white/10 bg-black/20 shrink-0">
             <PenLine size={13} className="text-purple-400 shrink-0" />
             <span className="text-xs font-semibold text-text-main truncate">{d.title || 'Drawing'}</span>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={d.thumbnail}
-            alt={d.title || 'Excalidraw drawing'}
-            className="w-full h-full object-contain bg-white/5"
-            style={{ maxHeight: 260 }}
-          />
+          <div className="flex-1 min-h-0 w-full relative flex items-center justify-center p-2 bg-white/5">
+            <img
+              src={d.thumbnail}
+              alt={d.title || 'Excalidraw drawing'}
+              className="max-w-full max-h-full object-contain"
+            />
+          </div>
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-xl">
             <span className="text-xs text-white font-semibold flex items-center space-x-1">
               <PenLine size={14} />

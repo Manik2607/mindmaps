@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position, NodeProps, NodeResizer } from '@xyflow/react';
+import { Handle, Position, NodeProps } from '@xyflow/react';
+import { NodeResizeFrame } from './NodeResizeFrame';
 import { useStore } from '@/store/useStore';
 import { AppNode, StickyNodeData } from '@/types';
 
@@ -31,7 +32,7 @@ export function StickyNode({ id, data, selected }: NodeProps<AppNode>) {
 
   return (
     <div
-      className="group relative rounded-lg border-2 p-4 min-w-[160px] min-h-[100px] shadow-lg transition-all"
+      className="w-full h-full flex flex-col group relative rounded-lg border-2 p-4 min-w-[160px] min-h-[100px] shadow-lg transition-all"
       style={{
         backgroundColor: d.color || STICKY_COLORS[0].bg,
         borderColor: selected ? 'var(--color-node-border-selected)' : colorEntry.border,
@@ -39,7 +40,7 @@ export function StickyNode({ id, data, selected }: NodeProps<AppNode>) {
       onDoubleClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
       onMouseLeave={() => setShowColorPicker(false)}
     >
-      <NodeResizer minWidth={140} minHeight={90} isVisible={selected} color="var(--color-accent)" />
+      <NodeResizeFrame minWidth={140} minHeight={90} isVisible={selected} color="var(--color-accent)" />
 
       {/* Handles */}
       {(['top', 'bottom', 'left', 'right'] as const).map((pos, i) => (
@@ -80,23 +81,24 @@ export function StickyNode({ id, data, selected }: NodeProps<AppNode>) {
       </div>
 
       {/* Content */}
-      {isEditing ? (
-        <textarea
-          ref={textareaRef}
-          className="w-full h-full bg-transparent border-none outline-none resize-none text-sm text-text-main leading-relaxed"
-          value={d.content}
-          onChange={(e) => updateNodeData(id, { content: e.target.value } as Partial<StickyNodeData>)}
-          onBlur={() => setIsEditing(false)}
-          onKeyDown={(e) => { if (e.key === 'Escape') setIsEditing(false); e.stopPropagation(); }}
-          onClick={(e) => e.stopPropagation()}
-          placeholder="Write a note…"
-          style={{ minHeight: 80 }}
-        />
-      ) : (
-        <div className="text-sm text-text-main leading-relaxed whitespace-pre-wrap break-words">
-          {d.content || <span className="text-text-muted/40 italic">Double-click to edit…</span>}
-        </div>
-      )}
+      <div className="flex-1 min-h-0 w-full mt-1">
+        {isEditing ? (
+          <textarea
+            ref={textareaRef}
+            className="w-full h-full bg-transparent border-none outline-none resize-none text-sm text-text-main leading-relaxed"
+            value={d.content}
+            onChange={(e) => updateNodeData(id, { content: e.target.value } as Partial<StickyNodeData>)}
+            onBlur={() => setIsEditing(false)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setIsEditing(false); e.stopPropagation(); }}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="Write a note…"
+          />
+        ) : (
+          <div className="w-full h-full text-sm text-text-main leading-relaxed whitespace-pre-wrap break-words overflow-y-auto">
+            {d.content || <span className="text-text-muted/40 italic">Double-click to edit…</span>}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

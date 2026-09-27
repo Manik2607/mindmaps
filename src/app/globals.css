@@ -37,3 +37,26 @@ body {
   --xy-minimap-mask-bg-color: rgba(0, 0, 0, 0.6);
   --xy-minimap-node-color: var(--color-node-fill);
 }
+
+/* React Flow Node Resizer edge styling & hitbox */
+.react-flow__resize-control.line {
+  position: absolute;
+  transition: opacity 0.15s ease;
+}
+
+.react-flow__resize-control.line::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
+.react-flow__resize-control.line.top,
+.react-flow__resize-control.line.bottom {
+  cursor: ns-resize !important;
+}
+
+.react-flow__resize-control.line.left,
+.react-flow__resize-control.line.right {
+  cursor: ew-resize !important;
+}
+

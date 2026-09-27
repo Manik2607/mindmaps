@@ -3,12 +3,11 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import {
   ReactFlow,
-  Background,
-  BackgroundVariant,
   useReactFlow,
   ConnectionMode,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { GlowingDottedBackground } from './GlowingDottedBackground';
 import { useStore } from '@/store/useStore';
 import { MindNode } from './nodes/MindNode';
 import { DocNode } from './nodes/DocNode';
@@ -147,7 +146,7 @@ export function MindMapCanvas() {
         zoomOnDoubleClick={false}
         onPaneContextMenu={onPaneContextMenu}
       >
-        <Background variant={BackgroundVariant.Dots} color="#383838" gap={24} size={1.5} />
+        <GlowingDottedBackground />
       </ReactFlow>
 
       {/* Right-click context menu */}

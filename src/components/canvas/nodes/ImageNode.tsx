@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { Handle, Position, NodeProps, NodeResizer } from '@xyflow/react';
+import { Handle, Position, NodeProps } from '@xyflow/react';
+import { NodeResizeFrame } from './NodeResizeFrame';
 import { useStore } from '@/store/useStore';
 import { AppNode, ImageNodeData } from '@/types';
 import { Image as ImageIcon } from 'lucide-react';
@@ -14,14 +15,14 @@ export function ImageNode({ id, data, selected }: NodeProps<AppNode>) {
   return (
     <div
       ref={containerRef}
-      className="group relative rounded-xl border-2 overflow-hidden"
+      className="w-full h-full group relative rounded-xl border-2 overflow-hidden"
       style={{
         borderColor: selected ? 'var(--color-node-border-selected)' : 'transparent',
         minWidth: 120,
         minHeight: 80,
       }}
     >
-      <NodeResizer minWidth={80} minHeight={60} isVisible={selected} color="var(--color-accent)" />
+      <NodeResizeFrame minWidth={80} minHeight={60} isVisible={selected} color="var(--color-accent)" />
 
       {/* Handles */}
       {(['top', 'bottom', 'left', 'right'] as const).map((pos, i) => (
