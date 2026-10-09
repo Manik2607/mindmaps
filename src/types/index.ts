@@ -40,6 +40,9 @@ export type KanbanCard = {
   title: string;
   description?: string;
   color?: string;
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  dueDate?: string;
+  label?: string;
   checklist?: { id: string; text: string; done: boolean }[];
 };
 
@@ -70,6 +73,7 @@ export type KanbanNodeData = {
   kind: 'kanban';
   title: string;
   columns: KanbanColumn[];
+  theme?: string;
 };
 
 export type ExcalidrawNodeData = {

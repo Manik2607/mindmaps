@@ -83,9 +83,9 @@ export function GlowingDottedBackground({
 
       // Stitch-style dynamic dot scaling:
       // When zoomed out (zoom < 1), dots dynamically scale up so they remain distinct,
-      // bold, and tactile rather than disappearing into subpixel dust.
-      const scaleFactor = Math.pow(Math.max(0.08, zoom), -0.4);
-      const dotRadius = Math.min(3.2, Math.max(1.2, 1.35 * scaleFactor));
+      // bold, and tactile rather than disappearing into subpixel dust, but capped moderately.
+      const scaleFactor = Math.pow(Math.max(0.08, zoom), -0.22);
+      const dotRadius = Math.min(2.0, Math.max(1.15, 1.25 * scaleFactor));
 
       // Calculate the start and end coordinates of dots visible on screen in world space:
       // sx = wx * zoom + x  ==>  wx = (sx - x) / zoom

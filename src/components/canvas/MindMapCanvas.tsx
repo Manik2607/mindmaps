@@ -40,6 +40,7 @@ export function MindMapCanvas() {
     onEdgesChange,
     onConnect,
     addNode,
+    overlay,
   } = useStore();
 
   const { screenToFlowPosition, getViewport, setNodes, getNodes, fitView } = useReactFlow();
@@ -142,7 +143,7 @@ export function MindMapCanvas() {
         className="bg-canvas"
         proOptions={{ hideAttribution: true }}
         selectionKeyCode="Shift"
-        deleteKeyCode={['Backspace', 'Delete']}
+        deleteKeyCode={overlay.type !== null ? null : ['Backspace', 'Delete']}
         zoomOnDoubleClick={false}
         onPaneContextMenu={onPaneContextMenu}
       >

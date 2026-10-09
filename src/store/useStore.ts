@@ -66,6 +66,7 @@ type WorkspaceState = {
   updateDocTitle: (nodeId: string, title: string) => void;
   updateKanbanColumns: (nodeId: string, columns: KanbanColumn[]) => void;
   updateKanbanTitle: (nodeId: string, title: string) => void;
+  updateKanbanTheme: (nodeId: string, theme: string) => void;
   updateExcalidrawData: (
     nodeId: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -104,11 +105,21 @@ export const useStore = create<WorkspaceState>()(
       edges: [],
 
       overlay: { type: null },
-      openOverlay: (type, nodeId) => set({ overlay: { type, nodeId } }),
+      openOverlay: (type, nodeId) =>
+        set({
+          overlay: { type, nodeId },
+          nodes: get().nodes.map((n) => (n.selected ? { ...n, selected: false } : n)),
+        }),
       closeOverlay: () => set({ overlay: { type: null } }),
 
       onNodesChange: (changes: NodeChange[]) => {
-        set({ nodes: applyNodeChanges(changes, get().nodes) as AppNode[] });
+        // Prevent accidental canvas node deletions while any full-screen overlay is active
+        const effectiveChanges =
+          get().overlay.type !== null
+            ? changes.filter((c) => c.type !== 'remove')
+            : changes;
+        if (effectiveChanges.length === 0) return;
+        set({ nodes: applyNodeChanges(effectiveChanges, get().nodes) as AppNode[] });
         get().saveWorkspace();
       },
       onEdgesChange: (changes: EdgeChange[]) => {
@@ -185,6 +196,17 @@ export const useStore = create<WorkspaceState>()(
           nodes: get().nodes.map((n) =>
             n.id === nodeId
               ? { ...n, data: { ...(n.data as KanbanNodeData), title } }
+              : n
+          ),
+        });
+        get().saveWorkspace();
+      },
+
+      updateKanbanTheme: (nodeId: string, theme: string) => {
+        set({
+          nodes: get().nodes.map((n) =>
+            n.id === nodeId
+              ? { ...n, data: { ...(n.data as KanbanNodeData), theme } }
               : n
           ),
         });
